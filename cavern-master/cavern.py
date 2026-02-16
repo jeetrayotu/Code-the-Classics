@@ -1,6 +1,6 @@
 from random import choice, randint, random, shuffle
-from enum import Enum
 import pygame, pgzero, pgzrun, sys
+from dataclasses import dataclass
 
 screen: pgzero.screen.Screen
 
@@ -368,7 +368,7 @@ class Player(GravityActor):
 
             # Do we need to create a new orb? Space must have been pressed and released, the minimum time between
             # orbs must have passed, and there is a limit of 5 orbs.
-            if space_pressed() and self.fire_timer <= 0 and len(game.orbs) < 5:
+            if keyboard.space and self.fire_timer <= 0 and len(game.orbs) < 5:
                 # x position will be 38 pixels in front of the player position, while ensuring it is within the
                 # bounds of the level
                 x = min(730, max(70, self.x + self.direction_x * 38))
@@ -689,27 +689,23 @@ def draw_status():
         screen.blit(image, (x, 450))
         x += IMAGE_WIDTH[image]
 
-# Is the space bar currently being pressed down?
-space_down = False
+@dataclass
+class InputState:
+    left: bool = False
+    right: bool = False
+    jump_pressed: bool = False
+    fire_pressed: bool = False
+    fire_held: bool = False
 
-# Has the space bar just been pressed? i.e. gone from not being pressed, to being pressed
-def space_pressed():
-    global space_down
-    if keyboard.space:
-        if space_down:
-            # Space was down previous frame, and is still down
-            return False
-        else:
-            # Space wasn't down previous frame, but now is
-            space_down = True
-            return True
-    else:
-        space_down = False
-        return False
+input_state = InputState()
 
 # Create a new Game object, without a Player object
 
 game = Game()
+
+# Set the initial game state
+
+state = "menu"
 
 class App():
     def __init__(self):
@@ -729,11 +725,6 @@ class App():
             # If an error occurs, just ignore it
             pass
 
-        global state
-
-        # Set the initial game state
-        state = "menu"
-
         pgzrun.go()
 
     def update(self):
@@ -750,7 +741,7 @@ class MenuScreen(pgzero.screen.Screen):
     def update(self):
         global state, game
 
-        if space_pressed():
+        if keyboard.space:
             # Switch to play state, and create a new Game object, passing it a new Player object to use
             state = "play"
             game = Game(Player())
@@ -793,7 +784,7 @@ class GameOverScreen(pgzero.screen.Screen):
     def update(self):
         global state, game
 
-        if space_pressed():
+        if keyboard.space:
             # Switch to menu state, and create a new game object without a player
             state = "menu"
             game = Game()
