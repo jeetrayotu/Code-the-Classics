@@ -2,6 +2,8 @@ from random import choice, randint, random, shuffle
 from enum import Enum
 import pygame, pgzero, pgzrun, sys
 
+screen: pgzero.screen.Screen
+
 # Check Python version number. sys.version_info gives version as a tuple, e.g. if (3,7,2,'final',0) for version 3.7.2.
 # Unlike many languages, Python can compare two tuples in the same way that you can compare numbers.
 if sys.version_info < (3,5):
@@ -705,12 +707,49 @@ def space_pressed():
         space_down = False
         return False
 
-# Pygame Zero calls the update and draw functions each frame
+# Create a new Game object, without a Player object
 
-def update():
-    global state, game
+game = Game()
 
-    if state == "menu":
+class App():
+    def __init__(self):
+        self.menu_screen = MenuScreen()
+        self.play_screen = PlayScreen()
+        self.game_over_screen = GameOverScreen()
+
+    def run(self):
+        # Set up sound system and start music
+        try:
+            pygame.mixer.quit()
+            pygame.mixer.init(44100, -16, 2, 1024)
+
+            music.play("theme")
+            music.set_volume(0.3)
+        except:
+            # If an error occurs, just ignore it
+            pass
+
+        global state
+
+        # Set the initial game state
+        state = "menu"
+
+        pgzrun.go()
+
+    def update(self):
+        getattr(self, f"{state}_screen").update()
+
+    def draw(self):
+        game.draw()
+        getattr(self, f"{state}_screen").draw()
+
+class MenuScreen(pgzero.screen.Screen):
+    def __init__(self):
+        pass
+
+    def update(self):
+        global state, game
+
         if space_pressed():
             # Switch to play state, and create a new Game object, passing it a new Player object to use
             state = "play"
@@ -718,23 +757,7 @@ def update():
         else:
             game.update()
 
-    elif state == "play":
-        if game.player.lives < 0:
-            game.play_sound("over")
-            state = "game_over"
-        else:
-            game.update()
-
-    elif state == "game_over":
-        if space_pressed():
-            # Switch to menu state, and create a new game object without a player
-            state = "menu"
-            game = Game()
-
-def draw():
-    game.draw()
-
-    if state == "menu":
+    def draw(self):
         # Draw title screen
         screen.blit("title", (0, 0))
 
@@ -747,31 +770,44 @@ def draw():
         anim_frame = min(((game.timer + 40) % 160) // 4, 9)
         screen.blit("space" + str(anim_frame), (130, 280))
 
-    elif state == "play":
+class PlayScreen(pgzero.screen.Screen):
+    def __init__(self):
+        pass
+
+    def update(self):
+        global state
+
+        if game.player.lives < 0:
+            game.play_sound("over")
+            state = "game_over"
+        else:
+            game.update()
+
+    def draw(self):
         draw_status()
 
-    elif state == "game_over":
+class GameOverScreen(pgzero.screen.Screen):
+    def __init__(self):
+        pass
+
+    def update(self):
+        global state, game
+
+        if space_pressed():
+            # Switch to menu state, and create a new game object without a player
+            state = "menu"
+            game = Game()
+
+    def draw(self):
         draw_status()
         # Display "Game Over" image
         screen.blit("over", (0, 0))
 
-# Set up sound system and start music
-try:
-    pygame.mixer.quit()
-    pygame.mixer.init(44100, -16, 2, 1024)
+def update():
+    app.update()
 
-    music.play("theme")
-    music.set_volume(0.3)
-except:
-    # If an error occurs, just ignore it
-    pass
+def draw():
+    app.draw()
 
-
-
-# Set the initial game state
-state = "menu"
-
-# Create a new Game object, without a Player object
-game = Game()
-
-pgzrun.go()
+app = App()
+app.run()
