@@ -354,9 +354,9 @@ class Player(GravityActor):
             # We're not hurt
             # Get keyboard input. dx represents the direction the player is facing
             dx = 0
-            if keyboard.left:
+            if input_state.left:
                 dx = -1
-            elif keyboard.right:
+            elif input_state.right:
                 dx = 1
 
             if dx != 0:
@@ -368,7 +368,7 @@ class Player(GravityActor):
 
             # Do we need to create a new orb? Space must have been pressed and released, the minimum time between
             # orbs must have passed, and there is a limit of 5 orbs.
-            if keyboard.space and self.fire_timer <= 0 and len(game.orbs) < 5:
+            if input_state.fire_pressed and self.fire_timer <= 0 and len(game.orbs) < 5:
                 # x position will be 38 pixels in front of the player position, while ensuring it is within the
                 # bounds of the level
                 x = min(730, max(70, self.x + self.direction_x * 38))
@@ -378,14 +378,14 @@ class Player(GravityActor):
                 game.play_sound("blow", 4)
                 self.fire_timer = 20
 
-            if keyboard.up and self.vel_y == 0 and self.landed:
+            if input_state.jump_pressed and self.vel_y == 0 and self.landed:
                 # Jump
                 self.vel_y = -16
                 self.landed = False
                 game.play_sound("jump")
 
         # Holding down space causes the current orb (if there is one) to be blown further
-        if keyboard.space:
+        if input_state.fire_held:
             if self.blowing_orb:
                 # Increase blown distance up to a maximum of 120
                 self.blowing_orb.blown_frames += 4
@@ -772,6 +772,14 @@ class PlayScreen(pgzero.screen.Screen):
             game.play_sound("over")
             state = "game_over"
         else:
+            input_state.left = keyboard.left
+            input_state.right = keyboard.right
+            input_state.jump_pressed = keyboard.up
+            if keyboard.space:
+                input_state.fire_held = input_state.fire_pressed
+                input_state.fire_pressed = True
+            else:
+                input_state.fire_held = input_state.fire_pressed = False
             game.update()
 
     def draw(self):
