@@ -212,7 +212,7 @@ class GravityActor(CollideActor):
         super().__init__(pos, ANCHOR_CENTRE_BOTTOM)
 
         self.vel_y = 0
-        self.landed = False
+        self.landed = None
 
     def update(self, detect=True):
         # Apply gravity, without going over the maximum fall speed
@@ -366,23 +366,24 @@ class Player(GravityActor):
                 if self.fire_timer < 10:
                     self.move(dx, 0, 4)
 
-            # Do we need to create a new orb? Space must have been pressed and released, the minimum time between
-            # orbs must have passed, and there is a limit of 5 orbs.
-            if input_state.fire_pressed and self.fire_timer <= 0 and len(game.orbs) < 5:
-                # x position will be 38 pixels in front of the player position, while ensuring it is within the
-                # bounds of the level
-                x = min(730, max(70, self.x + self.direction_x * 38))
-                y = self.y - 35
-                self.blowing_orb = Orb((x,y), self.direction_x)
-                game.orbs.append(self.blowing_orb)
-                game.play_sound("blow", 4)
-                self.fire_timer = 20
+            if self.landed is not None:
+                # Do we need to create a new orb? Space must have been pressed and released, the minimum time between
+                # orbs must have passed, and there is a limit of 5 orbs.
+                if input_state.fire_pressed and self.fire_timer <= 0 and len(game.orbs) < 5:
+                    # x position will be 38 pixels in front of the player position, while ensuring it is within the
+                    # bounds of the level
+                    x = min(730, max(70, self.x + self.direction_x * 38))
+                    y = self.y - 35
+                    self.blowing_orb = Orb((x,y), self.direction_x)
+                    game.orbs.append(self.blowing_orb)
+                    game.play_sound("blow", 4)
+                    self.fire_timer = 20
 
-            if input_state.jump_pressed and self.vel_y == 0 and self.landed:
-                # Jump
-                self.vel_y = -16
-                self.landed = False
-                game.play_sound("jump")
+                if input_state.jump_pressed and self.vel_y == 0 and self.landed:
+                    # Jump
+                    self.vel_y = -16
+                    self.landed = False
+                    game.play_sound("jump")
 
         # Holding down space causes the current orb (if there is one) to be blown further
         if input_state.fire_held:
