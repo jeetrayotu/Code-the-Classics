@@ -707,40 +707,34 @@ def space_pressed():
 
 # Pygame Zero calls the update and draw functions each frame
 
-class State(Enum):
-    MENU = 1
-    PLAY = 2
-    GAME_OVER = 3
-
-
 def update():
     global state, game
 
-    if state == State.MENU:
+    if state == "menu":
         if space_pressed():
             # Switch to play state, and create a new Game object, passing it a new Player object to use
-            state = State.PLAY
+            state = "play"
             game = Game(Player())
         else:
             game.update()
 
-    elif state == State.PLAY:
+    elif state == "play":
         if game.player.lives < 0:
             game.play_sound("over")
-            state = State.GAME_OVER
+            state = "game_over"
         else:
             game.update()
 
-    elif state == State.GAME_OVER:
+    elif state == "game_over":
         if space_pressed():
             # Switch to menu state, and create a new game object without a player
-            state = State.MENU
+            state = "menu"
             game = Game()
 
 def draw():
     game.draw()
 
-    if state == State.MENU:
+    if state == "menu":
         # Draw title screen
         screen.blit("title", (0, 0))
 
@@ -753,10 +747,10 @@ def draw():
         anim_frame = min(((game.timer + 40) % 160) // 4, 9)
         screen.blit("space" + str(anim_frame), (130, 280))
 
-    elif state == State.PLAY:
+    elif state == "play":
         draw_status()
 
-    elif state == State.GAME_OVER:
+    elif state == "game_over":
         draw_status()
         # Display "Game Over" image
         screen.blit("over", (0, 0))
@@ -775,7 +769,7 @@ except:
 
 
 # Set the initial game state
-state = State.MENU
+state = "menu"
 
 # Create a new Game object, without a Player object
 game = Game()
