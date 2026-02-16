@@ -1,0 +1,12 @@
+[project]
+name = "code-the-classics"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "ruff>=0.15.0",
+]
+
+[tool.uv.extra-build-dependencies]
+pygame = ["setuptools._distutils.msvccompiler"]
